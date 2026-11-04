@@ -23,9 +23,33 @@ namespace DoomTracker.Controllers_Api
 
         // GET: api/CategoriesApi
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+        public async Task<ActionResult<object>> GetCategories([FromQuery] int skip = 0, [FromQuery] int limit = 10)
         {
-            return await _context.Categories.ToListAsync();
+            var totalCount = await _context.Categories.CountAsync();
+            
+            var categories = await _context.Categories
+                .OrderBy(c => c.Id)
+                .Skip(skip)
+                .Take(limit)
+                .ToListAsync();
+            
+            string? nextLink = null;
+            if (skip + limit < totalCount)
+            {
+                var nextSkip = skip + limit;
+                var request = HttpContext.Request;
+                var baseUri = $"{request.Scheme}://{request.Host}{request.PathBase}{request.Path}";
+                nextLink = $"{baseUri}?skip={skip}&limit={limit}";
+            }
+
+            return Ok(new
+            {
+                totalCount = totalCount,
+                skip = skip,
+                limit = limit,
+                nextLink = nextLink,
+                data = categories
+            });
         }
 
         // GET: api/CategoriesApi/5

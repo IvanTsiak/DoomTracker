@@ -23,9 +23,34 @@ namespace DoomTracker.Controllers_Api
 
         // GET: api/DebtsApi
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Debt>>> GetDebts()
+        public async Task<ActionResult<object>> GetDebts([FromQuery] int skip = 0, [FromQuery] int limit = 10)
         {
-            return await _context.Debts.ToListAsync();
+            var totalCount = await _context.Debts.CountAsync();
+            
+            var debts = await _context.Debts
+                .Include(d => d.Category)
+                .OrderByDescending(d => d.CreatedAt)
+                .Skip(skip)
+                .Take(limit)
+                .ToListAsync();
+
+            string? nextLink = null;
+            if (skip + limit < totalCount)
+            {
+                var nextSkip = skip + limit;
+                var request = HttpContext.Request;
+                var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}{request.Path}";
+                nextLink = $"{baseUrl}?skip={nextSkip}&limit={limit}";
+            }
+
+            return Ok(new
+            {
+                totalCount = totalCount,
+                skip = skip,
+                limit = limit,
+                nextLink = nextLink,
+                data = debts
+            });
         }
 
         // GET: api/DebtsApi/5
