@@ -6,7 +6,7 @@ public class DebtLog
 {
     public int Id { get; set; }
     public int DebtId { get; set; }
-    public Debt Debt { get; set; }
+    public Debt Debt { get; set; } = null!;
     public DebtActionType ActionType { get; set; }
     public DebtStatus? OldStatus { get; set; }
     public DebtStatus NewStatus { get; set; }

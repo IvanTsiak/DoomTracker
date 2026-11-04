@@ -65,6 +65,8 @@ namespace DoomTracker.Controllers
             
             if (ModelState.IsValid)
             {
+                debt.Deadline = debt.Deadline.ToUniversalTime();
+                
                 if (uploadedFile != null && uploadedFile.Length > 0)
                 {
                     var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
@@ -121,6 +123,8 @@ namespace DoomTracker.Controllers
 
             if (ModelState.IsValid)
             {
+                debt.Deadline = debt.Deadline.ToUniversalTime();
+                
                 try
                 {
                     _context.Update(debt);

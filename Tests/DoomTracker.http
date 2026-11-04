@@ -1,0 +1,12 @@
+﻿###
+GET http://localhost:5239/api/categories
+Accept: application/json
+
+###
+POST http://localhost:5239/api/categories
+Content-Type: application/json
+
+{
+  "name": "Ababahalamaha",
+  "isSystem": false
+}
