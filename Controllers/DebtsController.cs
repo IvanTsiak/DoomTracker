@@ -5,11 +5,14 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using DoomTracker;
+using Microsoft.AspNetCore.Authentication;
 using DoomTracker.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace DoomTracker.Controllers
 {
+    [Authorize]
     public class DebtsController : Controller
     {
         private readonly AppDbContext _context;
@@ -61,7 +64,7 @@ namespace DoomTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,UserId,CategoryId,Title,Description,Deadline,Status,CreatedAt")] Debt debt, IFormFile? uploadedFile)
         {
-            debt.UserId = 1;
+            debt.UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             
             if (ModelState.IsValid)
             {

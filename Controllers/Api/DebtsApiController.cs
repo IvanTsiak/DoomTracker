@@ -7,11 +7,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DoomTracker;
 using DoomTracker.Models;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DoomTracker.Controllers_Api
 {
     [Route("api/debts")]
     [ApiController]
+    [Authorize]
     public class DebtsApiController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -103,7 +107,7 @@ namespace DoomTracker.Controllers_Api
         [HttpPost]
         public async Task<ActionResult<Debt>> PostDebt([FromForm] Debt debt, IFormFile? uploadedFile)
         {
-            debt.UserId = 1;
+            debt.UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             if (uploadedFile != null && uploadedFile.Length > 0)
             {
