@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication;
 using DoomTracker.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using DoomTracker.Services;
 
 namespace DoomTracker.Controllers
 {
@@ -16,10 +17,12 @@ namespace DoomTracker.Controllers
     public class DebtsController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly IFileService _fileService;
 
-        public DebtsController(AppDbContext context)
+        public DebtsController(AppDbContext context, IFileService fileService)
         {
             _context = context;
+            _fileService = fileService;
         }
 
         // GET: Debts
@@ -70,26 +73,16 @@ namespace DoomTracker.Controllers
             {
                 debt.Deadline = debt.Deadline.ToUniversalTime();
                 
-                if (uploadedFile != null && uploadedFile.Length > 0)
+                if (uploadedFile != null)
                 {
-                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-                    Directory.CreateDirectory(uploadsFolder);
-                    
-                    var uniqueFileName = Guid.NewGuid().ToString() + "_" + uploadedFile.FileName;
-                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await uploadedFile.CopyToAsync(stream);
-                    }
-                    
-                    debt.ProofFilePath = "/uploads/" + uniqueFileName;
+                    debt.ProofFilePath = await _fileService.UploadFileAsync(uploadedFile);
                 }
                 
                 _context.Add(debt);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", debt.CategoryId);
             return View(debt);
         }

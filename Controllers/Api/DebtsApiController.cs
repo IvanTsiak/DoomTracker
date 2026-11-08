@@ -9,6 +9,7 @@ using DoomTracker;
 using DoomTracker.Models;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
+using DoomTracker.Services;
 using Microsoft.AspNetCore.Authorization;
 
 namespace DoomTracker.Controllers_Api
@@ -19,10 +20,12 @@ namespace DoomTracker.Controllers_Api
     public class DebtsApiController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IFileService _fileService;
 
-        public DebtsApiController(AppDbContext context)
+        public DebtsApiController(AppDbContext context, IFileService fileService)
         {
             _context = context;
+            _fileService = fileService;
         }
 
         // GET: api/DebtsApi
@@ -109,20 +112,9 @@ namespace DoomTracker.Controllers_Api
         {
             debt.UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            if (uploadedFile != null && uploadedFile.Length > 0)
+            if (uploadedFile != null)
             {
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-                Directory.CreateDirectory(uploadsFolder);
-                
-                var uniqueFileName = Guid.NewGuid().ToString() + "_" + uploadedFile.FileName;
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await uploadedFile.CopyToAsync(stream);
-                }
-                
-                debt.ProofFilePath = "/uploads/" + uniqueFileName;
+                debt.ProofFilePath = await _fileService.UploadFileAsync(uploadedFile);
             }
             
             _context.Debts.Add(debt);
