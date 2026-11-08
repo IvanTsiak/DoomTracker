@@ -19,8 +19,6 @@ services:
       - "8080:8080"
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=doomtracker_db;Username=postgres;Password=SuperSecretPassword123
-      - Authentication__Google__ClientId=dummy_id
-      - Authentication__Google__ClientSecret=dummy_secret
     depends_on:
       - db
     restart: always
