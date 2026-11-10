@@ -133,6 +133,7 @@ namespace DoomTracker.Controllers
             if (ModelState.IsValid)
             {
                 debt.Deadline = debt.Deadline.ToUniversalTime();
+                debt.CreatedAt = debt.CreatedAt.ToUniversalTime();
                 
                 try
                 {
