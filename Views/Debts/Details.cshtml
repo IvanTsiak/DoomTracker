@@ -60,6 +60,38 @@
         </dd>
     </dl>
 </div>
+<hr />
+<h4>Історія змін (Logs)</h4>
+<table class="table table-sm table-striped">
+    <thead>
+    <tr>
+        <th>Date</th>
+        <th>Action</th>
+        <th>Old Status</th>
+        <th>New Status</th>
+        <th>Message</th>
+    </tr>
+    </thead>
+    <tbody>
+    @if (Model.Logs != null && Model.Logs.Any())
+    {
+        foreach (var log in Model.Logs)
+        {
+            <tr>
+                <td>@log.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                <td><span class="badge bg-info text-dark">@log.ActionType</span></td>
+                <td>@log.OldStatus</td>
+                <td><span class="badge bg-primary">@log.NewStatus</span></td>
+                <td>@log.LogMessage</td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr><td colspan="5" class="text-muted">History is empty</td></tr>
+    }
+    </tbody>
+</table>
 <div>
     <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>

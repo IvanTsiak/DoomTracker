@@ -41,6 +41,7 @@ namespace DoomTracker.Controllers
             var debt = await _context.Debts
                 .Include(d => d.Category)
                 .Include(d => d.User)
+                .Include(d => d.Logs.OrderByDescending(l => l.CreatedAt))
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (debt == null)
             {
@@ -75,6 +76,13 @@ namespace DoomTracker.Controllers
                 {
                     debt.ProofFilePath = await _fileService.UploadFileAsync(uploadedFile);
                 }
+                
+                debt.Logs.Add(new DebtLog
+                {
+                    ActionType = DebtActionType.Created,
+                    NewStatus = debt.Status,
+                    LogMessage = "Debt successfully created"
+                });
                 
                 _context.Add(debt);
                 await _context.SaveChangesAsync();
@@ -128,6 +136,25 @@ namespace DoomTracker.Controllers
                 
                 try
                 {
+                    var originalDebt = await _context.Debts.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id);
+                    if (originalDebt == null)
+                    {
+                        return NotFound();
+                    }
+                    
+                    if (originalDebt.Status != debt.Status)
+                    {
+                        var log = new DebtLog
+                        {
+                            DebtId = debt.Id,
+                            ActionType = DebtActionType.StatusChanged,
+                            OldStatus = originalDebt.Status,
+                            NewStatus = debt.Status,
+                            LogMessage = $"Status changed from {originalDebt.Status} to {debt.Status}"
+                        };
+                        _context.DebtLogs.Add(log);
+                    }
+                    
                     _context.Update(debt);
                     await _context.SaveChangesAsync();
                 }
