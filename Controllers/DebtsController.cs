@@ -1,15 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication;
 using DoomTracker.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using DoomTracker.Services;
+using Microsoft.ApplicationInsights;
 
 namespace DoomTracker.Controllers
 {
@@ -18,11 +14,13 @@ namespace DoomTracker.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IFileService _fileService;
+        private readonly TelemetryClient _telemetryClient;
 
-        public DebtsController(AppDbContext context, IFileService fileService)
+        public DebtsController(AppDbContext context, IFileService fileService,  TelemetryClient telemetryClient)
         {
             _context = context;
             _fileService = fileService;
+            _telemetryClient = telemetryClient;
         }
 
         // GET: Debts
@@ -80,6 +78,13 @@ namespace DoomTracker.Controllers
                 
                 _context.Add(debt);
                 await _context.SaveChangesAsync();
+                
+                _telemetryClient.TrackEvent("DebtCreated", new Dictionary<string, string> 
+                { 
+                    { "DebtTitle", debt.Title },
+                    { "CategoryId", debt.CategoryId.ToString() }
+                });
+                
                 return RedirectToAction(nameof(Index));
             }
             

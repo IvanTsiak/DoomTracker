@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using DoomTracker.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.ApplicationInsights;
 
 namespace DoomTracker.Controllers_Api
 {
@@ -21,11 +22,13 @@ namespace DoomTracker.Controllers_Api
     {
         private readonly AppDbContext _context;
         private readonly IFileService _fileService;
+        private readonly TelemetryClient _telemetryClient;
 
-        public DebtsApiController(AppDbContext context, IFileService fileService)
+        public DebtsApiController(AppDbContext context, IFileService fileService,  TelemetryClient telemetryClient)
         {
             _context = context;
             _fileService = fileService;
+            _telemetryClient = telemetryClient;
         }
 
         // GET: api/DebtsApi
@@ -119,6 +122,12 @@ namespace DoomTracker.Controllers_Api
             
             _context.Debts.Add(debt);
             await _context.SaveChangesAsync();
+            
+            _telemetryClient.TrackEvent("DebtCreated", new Dictionary<string, string> 
+            { 
+                { "DebtTitle", debt.Title },
+                { "CategoryId", debt.CategoryId.ToString() }
+            });
             
             return CreatedAtAction("GetDebt", new { id = debt.Id }, debt);
         }
