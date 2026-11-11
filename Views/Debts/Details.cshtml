@@ -1,7 +1,10 @@
 @model DoomTracker.Models.Debt
 
 @{
-    ViewData["Title"] = "Debt details - Landing";
+    ViewData["Title"] = $"Debt details: {Model.Title}";
+    ViewData["MetaDescription"] = $"Detailed information about outstanding debt '{Model.Title}' in category {Model.Category.Name}. View the procrastinator's history of excuses.";
+    ViewData["MetaKeywords"] = $"Debt, {Model.Category.Name}, procrastination, deadline, {Model.Title}";
+    
     var statusBadgeClass = Model.Status switch
     {
         DoomTracker.Models.DebtStatus.Pending => "bg-secondary",
@@ -118,9 +121,5 @@
 </div>
 
 <a href="mailto:ivanzjak2007@gmail.com" class="btn btn-danger floating-contact d-flex align-items-center">
-    <span class="fs-5 me-2">📞</span> 
-    <div>
-        <strong></strong><br/>
-        <small>Write to us! (Please)</small>
-    </div>
+    <small>Write to us! (Please)</small>
 </a>
