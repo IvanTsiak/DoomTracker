@@ -1,98 +1,126 @@
 @model DoomTracker.Models.Debt
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Debt details - Landing";
+    var statusBadgeClass = Model.Status switch
+    {
+        DoomTracker.Models.DebtStatus.Pending => "bg-secondary",
+        DoomTracker.Models.DebtStatus.InProgress => "bg-warning text-dark",
+        DoomTracker.Models.DebtStatus.Completed => "bg-success",
+        DoomTracker.Models.DebtStatus.Failed => "bg-danger",
+        _ => "bg-primary"
+    };
 }
 
-<h1>Details</h1>
+<style>
+    .floating-contact {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        border-radius: 50px;
+        padding: 10px 20px;
+    }
+</style>
 
-<div>
-    <h4>Debt</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.User)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.User.Email)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Category)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Category.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Deadline)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Deadline)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Status)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ProofFilePath)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ProofFilePath)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-    </dl>
+<div class="container mt-4">
+    
+    <div class="p-5 mb-4 bg-dark text-white rounded-3 shadow">
+        <div class="container-fluid py-2">
+            <h1 class="display-4 fw-bold">@Model.Title</h1>
+            <p class="col-md-8 fs-4">
+                Category: <span class="badge bg-info text-dark">@Model.Category.Name</span> | 
+                Status: <span class="badge @statusBadgeClass fs-5">@Model.Status</span>
+            </p>
+            <p><strong>Deadline:</strong> @Model.Deadline.ToLocalTime().ToString("dd MMMM yyyy, HH:mm")</p>
+            
+            <div class="mt-4">
+                <a href="#proof-section" class="btn btn-outline-light btn-lg">Proof</a>
+                <a href="#history-section" class="btn btn-outline-light btn-lg">A History of Shame</a>
+                <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary btn-lg ms-3">Edit</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row align-items-md-stretch mb-5" id="desc-section">
+        <div class="col-md-12">
+            <div class="h-100 p-5 bg-light border rounded-3 shadow-sm">
+                <h2>Detailed description</h2>
+                <p class="fs-5 text-muted">
+                    @(string.IsNullOrEmpty(Model.Description) ? "The procrastinator didn't even manage to come up with an excuse..." : Model.Description)
+                </p>
+                <hr />
+                <p><strong>User:</strong> @Model.User.Username (@Model.User.Email)</p>
+                <p><strong>Created:</strong> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5" id="proof-section">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h3 class="mb-0">Evidence of work provided</h3>
+                </div>
+                <div class="card-body text-center p-5">
+                    @if (!string.IsNullOrEmpty(Model.ProofFilePath))
+                    {
+                        <img src="@Model.ProofFilePath" class="img-fluid rounded mb-4" style="max-height: 400px; object-fit: cover;" onerror="this.style.display='none';" alt="Доказ роботи" />
+                        <br />
+                        <a href="@Model.ProofFilePath" target="_blank" class="btn btn-success btn-lg">
+                            <i class="bi bi-download">View original file</i> 
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning fs-5">
+                            No evidence has been provided. This debt rests solely on the user's conscience.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5" id="history-section">
+        <div class="col-md-12">
+            <h2 class="mb-4">Chronology of changes</h2>
+            <div class="list-group shadow-sm">
+                @if (Model.Logs != null && Model.Logs.Any())
+                {
+                    foreach (var log in Model.Logs)
+                    {
+                        <div class="list-group-item list-group-item-action flex-column align-items-start p-4">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1 fw-bold text-primary">@log.ActionType</h5>
+                                <small class="text-muted">@log.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                            </div>
+                            <p class="mb-1 fs-5">@log.LogMessage</p>
+                            @if (log.OldStatus != null)
+                            {
+                                <small>Changed from <span class="badge bg-secondary">@log.OldStatus</span> to <span class="badge bg-primary">@log.NewStatus</span></small>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="list-group-item text-muted">History is empty</div>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-5 pb-5">
+        <a asp-action="Index" class="btn btn-outline-secondary">Return to the list</a>
+    </div>
 </div>
-<hr />
-<h4>Історія змін (Logs)</h4>
-<table class="table table-sm table-striped">
-    <thead>
-    <tr>
-        <th>Date</th>
-        <th>Action</th>
-        <th>Old Status</th>
-        <th>New Status</th>
-        <th>Message</th>
-    </tr>
-    </thead>
-    <tbody>
-    @if (Model.Logs != null && Model.Logs.Any())
-    {
-        foreach (var log in Model.Logs)
-        {
-            <tr>
-                <td>@log.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
-                <td><span class="badge bg-info text-dark">@log.ActionType</span></td>
-                <td>@log.OldStatus</td>
-                <td><span class="badge bg-primary">@log.NewStatus</span></td>
-                <td>@log.LogMessage</td>
-            </tr>
-        }
-    }
-    else
-    {
-        <tr><td colspan="5" class="text-muted">History is empty</td></tr>
-    }
-    </tbody>
-</table>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+<a href="mailto:ivanzjak2007@gmail.com" class="btn btn-danger floating-contact d-flex align-items-center">
+    <span class="fs-5 me-2">📞</span> 
+    <div>
+        <strong></strong><br/>
+        <small>Write to us! (Please)</small>
+    </div>
+</a>
