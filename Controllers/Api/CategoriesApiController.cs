@@ -124,9 +124,32 @@ namespace DoomTracker.Controllers_Api
             return NoContent();
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchCategories([FromQuery] string term)
+        {
+            if (string.IsNullOrWhiteSpace(term) || term.Length < 3)
+            {
+                return Ok(new { results = new List<object>() });
+            }
+            
+            var categories = await _context.Categories
+                .Where(c => c.Name.ToLower().Contains(term.ToLower()))
+                .OrderBy(c => c.Name)
+                .Take(50)
+                .Select(c => new 
+                { 
+                    id = c.Id, 
+                    text = c.Name 
+                })
+                .ToListAsync();
+
+            return Ok(new { results = categories });
+        }
+
         private bool CategoryExists(int id)
         {
             return _context.Categories.Any(e => e.Id == id);
         }
+        
     }
 }
