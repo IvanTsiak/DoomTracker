@@ -52,39 +52,67 @@
     <a asp-action="Index">Back to List</a>
 </div>
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        var $select = $('.category-autocomplete');
 
-    <script>
-        $(document).ready(function () {
-            $('.category-autocomplete').select2({
-                placeholder: 'Enter at least 3 characters...',
-                minimumInputLength: 3,
-                ajax: {
-                    url: '/api/categories/search',
-                    dataType: 'json',
-                    delay: 300,
-                    data: function (params) {
-                        return {
-                            term: params.term
-                        };
-                    },
-                    processResults: function (data) {
-                        return {
-                            results: data.results
-                        };
-                    },
-                    cache: true
-                },
-                language: {
-                    inputTooShort: function () { return 'Enter a few more characters...'; },
-                    searching: function () { return 'Searching the database...'; },
-                    noResults: function () { return 'No such category found'; }
+        $select.select2({
+            placeholder: 'Enter at least 3 characters...',
+            minimumInputLength: 3,
+            tags: true,
+            createTag: function (params) {
+                var term = $.trim(params.term);
+                if (term === '') return null;
+                
+                return {
+                    id: 'NEW_TAG',
+                    text: term + ' (Create new)',
+                    actualName: term, 
+                    newTag: true
                 }
-            });
+            },
+            ajax: {
+                url: '/api/categories/search',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) {
+                    return { term: params.term };
+                },
+                processResults: function (data) {
+                    return { results: data.results };
+                },
+                cache: true
+            },
+            language: {
+                inputTooShort: function () { return 'Enter a few more characters...'; },
+                searching: function () { return 'Searching the database...'; }
+            }
         });
-    </script>
-}
+        
+        $select.on('select2:select', function (e) {
+            var data = e.params.data;
+            
+            if (data.newTag) {
+                $.ajax({
+                    url: '/api/categories',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ 
+                        name: data.actualName, 
+                        isSystem: false
+                    }),
+                    success: function (newCategory) {
+                        var option = new Option(newCategory.name, newCategory.id, true, true);
+                        
+                        $select.find('option[value="NEW_TAG"]').remove();
+                        $select.append(option).trigger('change');
+                    },
+                    error: function () {
+                        alert('Error creating category. Please try again.');
+                        $select.val(null).trigger('change');
+                    }
+                });
+            }
+        });
+    });
+</script>
