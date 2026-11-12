@@ -70,6 +70,15 @@
     <script>
     $(document).ready(function () {
         var $select = $('.category-autocomplete');
+        var $form = $('form');
+        var $submitBtn = $form.find('input[type="submit"]');
+        
+        $form.on('submit', function (e) {
+            if ($select.val() === 'NEW_TAG') {
+                e.preventDefault();
+                alert('Hold on a second, we’re creating a new category...');
+            }
+        });
 
         $select.select2({
             placeholder: 'Enter at least 3 characters...',
@@ -108,6 +117,9 @@
             var data = e.params.data;
             
             if (data.newTag) {
+                $submitBtn.prop('disabled', true);
+                $submitBtn.val('Creating category...');
+
                 $.ajax({
                     url: '/api/categories',
                     type: 'POST',
@@ -117,18 +129,27 @@
                         isSystem: false
                     }),
                     success: function (newCategory) {
-                        var option = new Option(newCategory.name, newCategory.id, true, true);
+                        var realId = newCategory.id || newCategory.Id;
+                        var realName = newCategory.name || newCategory.Name;
+
+                        var option = new Option(realName, realId, true, true);
                         
                         $select.find('option[value="NEW_TAG"]').remove();
                         $select.append(option).trigger('change');
+                        
+                        $submitBtn.prop('disabled', false);
+                        $submitBtn.val('Create');
                     },
                     error: function () {
                         alert('Error creating category. Please try again.');
                         $select.val(null).trigger('change');
+                        
+                        $submitBtn.prop('disabled', false);
+                        $submitBtn.val('Create');
                     }
                 });
-                }
-            });
+            }
         });
-    </script>
+    });
+</script>
 }
