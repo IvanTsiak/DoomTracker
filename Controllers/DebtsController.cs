@@ -9,7 +9,7 @@ using Microsoft.ApplicationInsights;
 
 namespace DoomTracker.Controllers
 {
-    [Authorize]
+    // [Authorize]
     public class DebtsController : Controller
     {
         private readonly AppDbContext _context;

@@ -70,15 +70,7 @@
     <script>
     $(document).ready(function () {
         var $select = $('.category-autocomplete');
-        var $form = $('form');
-        var $submitBtn = $form.find('input[type="submit"]');
-        
-        $form.on('submit', function (e) {
-            if ($select.val() === 'NEW_TAG') {
-                e.preventDefault();
-                alert('Hold on a second, we’re creating a new category...');
-            }
-        });
+        var $submitBtn = $('form').find('input[type="submit"]');
 
         $select.select2({
             placeholder: 'Enter at least 3 characters...',
@@ -89,67 +81,51 @@
                 if (term === '') return null;
                 
                 return {
-                    id: 'NEW_TAG',
-                    text: term + ' (Create new)',
-                    actualName: term, 
-                    newTag: true
-                }
+                    id: 'NEW_TAG_' + term,
+                    text: term + ' (Create)'
+                };
             },
             ajax: {
                 url: '/api/categories/search',
                 dataType: 'json',
                 delay: 300,
-                data: function (params) {
-                    return { term: params.term };
-                },
-                processResults: function (data) {
-                    return { results: data.results };
-                },
+                data: function (params) { return { term: params.term }; },
+                processResults: function (data) { return { results: data.results }; },
                 cache: true
-            },
-            language: {
-                inputTooShort: function () { return 'Enter a few more characters...'; },
-                searching: function () { return 'Searching the database...'; }
             }
         });
         
         $select.on('select2:select', function (e) {
-            var data = e.params.data;
+            var selectedId = e.params.data.id.toString();
             
-            if (data.newTag) {
-                $submitBtn.prop('disabled', true);
-                $submitBtn.val('Creating category...');
-
+            if (selectedId.startsWith('NEW_TAG_')) {
+                var actualName = selectedId.replace('NEW_TAG_', '');
+                
+                $submitBtn.prop('disabled', true).val('Creating...');
+                
                 $.ajax({
-                    url: '/api/categories',
+                    url: '/api/categories', 
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ 
-                        name: data.actualName, 
-                        isSystem: false
-                    }),
+                    data: JSON.stringify({ name: actualName, isSystem: false }),
                     success: function (newCategory) {
                         var realId = newCategory.id || newCategory.Id;
                         var realName = newCategory.name || newCategory.Name;
 
                         var option = new Option(realName, realId, true, true);
-                        
-                        $select.find('option[value="NEW_TAG"]').remove();
+                        $select.find('option[value="' + selectedId + '"]').remove();
                         $select.append(option).trigger('change');
                         
-                        $submitBtn.prop('disabled', false);
-                        $submitBtn.val('Create');
+                        $submitBtn.prop('disabled', false).val('Create');
                     },
                     error: function () {
-                        alert('Error creating category. Please try again.');
+                        alert('Server error. Please try again.');
                         $select.val(null).trigger('change');
-                        
-                        $submitBtn.prop('disabled', false);
-                        $submitBtn.val('Create');
+                        $submitBtn.prop('disabled', false).val('Create');
                     }
                 });
             }
         });
     });
-</script>
+    </script>
 }
